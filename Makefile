@@ -3,13 +3,13 @@
 all: fmt vet build run
 
 fmt:
-	go fmt main.go db.go
+	go fmt ./...
 
 vet: fmt
-	go vet main.go db.go
+	go vet ./...
 
 build: vet
-	go build -o bin/main main.go db.go
+	go build -o bin/main cmd/main/main.go
 
 run: build
 	./bin/main

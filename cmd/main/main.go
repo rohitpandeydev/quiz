@@ -1,26 +1,34 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"log"
-	"os"
-	"strings"
+
+	"github.com/rohitpandeydev/quiz/internal/config"
+	"github.com/rohitpandeydev/quiz/internal/db"
+	"github.com/rohitpandeydev/quiz/internal/game"
 )
 
-type question struct {
-	Question string   `json:"question"`
-	Answer   []string `json:"answer"`
-}
-
-type score struct {
-	correct int
-	total   int
-}
-
-var questions []question
-
 func main() {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	database, err := db.NewDB(cfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	questions, err := database.GetQuestions()
+	if err != nil {
+		log.Fatalf("Failed to get questions: %v", err)
+	}
+
+	game := game.NewGame(questions)
+	game.Start()
+}
+
+/*func main() {
 	fmt.Printf("!!!!!!!!!Welcome to quiz game!!!!!!!\n")
 
 	reader := bufio.NewReader(os.Stdin)
@@ -59,3 +67,4 @@ func main() {
 
 	fmt.Printf("Total correct percentage %.2f", (float64(scor.correct)/float64(scor.total))*100)
 }
+*/
