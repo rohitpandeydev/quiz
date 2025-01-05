@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/rohitpandeydev/quiz/pkg/logger"
 )
 
 type DBConfig struct {
@@ -14,16 +15,21 @@ type DBConfig struct {
 	DBName   string
 }
 
-func LoadConfig() (*DBConfig, error) {
+func LoadConfig(log *logger.Logger) (*DBConfig, error) {
+	log.Debug("Loading environment variables")
 	if err := godotenv.Load(); err != nil {
+		log.Error("Error loading .env file: %v", err)
 		return nil, err
 	}
 
-	return &DBConfig{
+	config := &DBConfig{
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
 		DBName:   os.Getenv("DB_NAME"),
-	}, nil
+	}
+
+	log.Info("Configuration loaded successfully")
+	return config, nil
 }

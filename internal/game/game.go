@@ -2,38 +2,40 @@ package game
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/rohitpandeydev/quiz/internal/models"
+	"github.com/rohitpandeydev/quiz/pkg/logger"
 )
 
 type Game struct {
 	questions []models.Question
 	score     models.Score
 	reader    *bufio.Reader
+	logger    *logger.Logger
 }
 
-func NewGame(questions []models.Question) *Game {
+func NewGame(questions []models.Question, log *logger.Logger) *Game {
 	return &Game{
 		questions: questions,
 		score:     models.Score{},
 		reader:    bufio.NewReader(os.Stdin),
+		logger:    log,
 	}
 }
 
 func (g *Game) Start() {
-	fmt.Println("Welcome to the Quiz Game!")
-	fmt.Println("------------------------")
+	g.logger.Info("Welcome to the Quiz Game!")
+	g.logger.Info("------------------------")
 
 	for i, q := range g.questions {
-		fmt.Printf("\nQuestion %d: %s\n", i+1, q.Question)
-		fmt.Print("Your answer: ")
+		g.logger.Info("\nQuestion %d: %s\n", i+1, q.Question)
+		g.logger.Info("Your answer: ")
 
 		answer, err := g.reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf("Error reading input: %v\n", err)
+			g.logger.Error("Error reading input: %v\n", err)
 			continue
 		}
 
@@ -50,17 +52,17 @@ func (g *Game) Start() {
 		}
 
 		if correct {
-			fmt.Println("Correct!")
+			g.logger.Info("Correct!")
 			g.score.Correct++
 		} else {
-			fmt.Printf("Wrong! The correct answer(s) were: %s\n", strings.Join(q.Answer, " or "))
+			g.logger.Info("Wrong! The correct answer(s) were: %s\n", strings.Join(q.Answer, " or "))
 		}
 		g.score.Total++
 	}
 
 	// Calculate and display final score
 	percentage := float64(g.score.Correct) / float64(g.score.Total) * 100
-	fmt.Printf("\nQuiz completed!\n")
-	fmt.Printf("You got %d out of %d questions correct (%.2f%%)\n",
+	g.logger.Info("\nQuiz completed!\n")
+	g.logger.Info("You got %d out of %d questions correct (%.2f%%)\n",
 		g.score.Correct, g.score.Total, percentage)
 }

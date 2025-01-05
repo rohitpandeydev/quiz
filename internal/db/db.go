@@ -4,30 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rohitpandeydev/quiz/internal/config"
 	"github.com/rohitpandeydev/quiz/internal/models"
+	"github.com/rohitpandeydev/quiz/pkg/logger"
 )
 
 type DB struct {
-	conn *pgx.Conn
+	conn   *pgx.Conn
+	logger *logger.Logger
 }
 
-func NewDB(cfg *config.DBConfig) (*DB, error) {
+func NewDB(cfg *config.DBConfig, log *logger.Logger) (*DB, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
 
+	log.Info("Connecting to database at %s:%s", cfg.Host, cfg.Port)
 	conn, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DB{conn: conn}, nil
+	return &DB{conn: conn, logger: log}, nil
 }
 
 func (db *DB) GetQuestions() ([]models.Question, error) {
+	db.logger.Debug("Fetching questions from database")
 	var questions []models.Question
 	rows, err := db.conn.Query(context.Background(), "SELECT id, question FROM quiz")
 	if err != nil {
@@ -41,14 +44,17 @@ func (db *DB) GetQuestions() ([]models.Question, error) {
 		var que models.Question
 		err := rows.Scan(&id, &quest)
 		if err != nil {
-			log.Fatal(err)
+			db.logger.Error("Error scanning row: %v", err)
+			return nil, err
 		}
 		err = json.Unmarshal(quest, &que)
 		if err != nil {
-			log.Fatalf("error when unmarshalling the json : %s", err)
+			db.logger.Error("Error unmarshalling JSON: %v", err)
+			return nil, err
 		}
 		questions = append(questions, que)
 	}
 
+	db.logger.Info("Successfully fetched %d questions", len(questions))
 	return questions, nil
 }
